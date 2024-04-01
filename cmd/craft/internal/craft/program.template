@@ -1,0 +1,111 @@
+package main
+
+import (
+	"bytes"
+	"fmt"
+	"os"
+	"reflect"
+	"text/template"
+
+    craft_error "github.com/aria3ppp/craft/error"
+	macropkg "{{.Macro.ImportPath}}"
+	{{.Package.ImportPathDefinition}}
+)
+
+func main() {
+	var value {{.ValueDefinition}}
+	typ := reflect.TypeOf(value)
+
+	out, err := macropkg.Marshal("{{.Macro.Input}}", typ)
+	if err != nil {
+        fmt.Println(craft_error.Error{
+            Msg: fmt.Sprintf("macro {{.Macro.Name}} failed on {{.SourceName}}: %s", err),
+            RelativePath: "{{.Package.RelativePath}}",
+			GoFile: "{{.Package.GoFile}}",
+            MacroPosition: craft_error.Position{Line: {{.Macro.Position.Line}}, Column: {{.Macro.Position.Column}}},
+            Kind: craft_error.KindProgram,
+        }.Error())
+		os.Exit(1)
+		return
+	}
+
+	// add compile time checks
+
+	out = fmt.Sprintf(
+		"%s%s",
+		out,
+		"\n\nfunc _() { _ = \"compile time checks\" }",
+	)
+
+	tmplt, err := template.New("").Parse(out)
+	if err != nil {
+        fmt.Println(craft_error.Error{
+            Msg: fmt.Sprintf("[INTERNAL ERROR] [file a bug] failed to template.New: %s", err),
+            RelativePath: "{{.Package.RelativePath}}",
+			GoFile: "{{.Package.GoFile}}",
+            MacroPosition: craft_error.Position{Line: {{.Macro.Position.Line}}, Column: {{.Macro.Position.Column}}},
+            Kind: craft_error.KindProgram,
+        }.Error())
+		os.Exit(1)
+		return
+	}
+
+	bytesBuffer := bytes.NewBuffer(make([]byte, 0, len(out)))
+
+	values := map[string]any{
+		"Package": "{{.Package.Name}}",
+		"Type": map[string]string{
+			"Name": "{{.TypeName}}",
+		},
+	}
+
+	if err = tmplt.Execute(bytesBuffer, values); err != nil {
+        fmt.Println(craft_error.Error{
+            Msg: fmt.Sprintf("[INTERNAL ERROR] [file a bug] failed to template.Execute: %s", err),
+            RelativePath: "{{.Package.RelativePath}}",
+			GoFile: "{{.Package.GoFile}}",
+            MacroPosition: craft_error.Position{Line: {{.Macro.Position.Line}}, Column: {{.Macro.Position.Column}}},
+            Kind: craft_error.KindProgram,
+        }.Error())
+		os.Exit(1)
+		return
+	}
+
+	programFile, err := os.Create("{{.OutputFilePath}}")
+	if err != nil {
+        fmt.Println(craft_error.Error{
+            Msg: fmt.Sprintf("[INTERNAL ERROR] [file a bug] failed to create the program: %s", err),
+            RelativePath: "{{.Package.RelativePath}}",
+			GoFile: "{{.Package.GoFile}}",
+            MacroPosition: craft_error.Position{Line: {{.Macro.Position.Line}}, Column: {{.Macro.Position.Column}}},
+            Kind: craft_error.KindProgram,
+        }.Error())
+		os.Exit(1)
+		return
+	}
+
+	defer func() {
+		if err := programFile.Close(); err != nil {
+            fmt.Println(craft_error.Error{
+                Msg: fmt.Sprintf("[INTERNAL ERROR] [file a bug] failed to close the program file: %s", err),
+                RelativePath: "{{.Package.RelativePath}}",
+				GoFile: "{{.Package.GoFile}}",
+                MacroPosition: craft_error.Position{Line: {{.Macro.Position.Line}}, Column: {{.Macro.Position.Column}}},
+                Kind: craft_error.KindProgram,
+            }.Error())
+			os.Exit(1)
+		}
+	}()
+
+	if _, err := programFile.Write(bytesBuffer.Bytes()); err != nil {
+        fmt.Println(craft_error.Error{
+            Msg: fmt.Sprintf("[INTERNAL ERROR] [file a bug] failed to write the program: %s", err),
+            RelativePath: "{{.Package.RelativePath}}",
+			GoFile: "{{.Package.GoFile}}",
+            MacroPosition: craft_error.Position{Line: {{.Macro.Position.Line}}, Column: {{.Macro.Position.Column}}},
+            Kind: craft_error.KindProgram,
+        }.Error())
+		os.Exit(1)
+		return
+	}
+}

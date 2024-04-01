@@ -1,0 +1,28 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch Package",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${fileDirname}"
+        },
+        {
+            "args": ["macro", "xx", "ww", "oo", "ll", "x2=xx"],
+            "cwd": "${workspaceFolder}/cmd/delete_me/delete_me_2/",
+            "env": {
+              "GOFILE": "${workspaceFolder}/cmd/delete_me/delete_me_2/delete_me.go",
+            },
+            "mode": "auto",
+            "name": "Debug craft",
+            "program": "${workspaceFolder}/cmd/craft",
+            "request": "launch",
+            "showLog": true,
+            "type": "go",
+          },
+    ]
+}
